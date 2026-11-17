@@ -27,6 +27,22 @@ class AuditLogTest {
         assertEquals("INFO_REQUESTED", events.get(1).eventType());
     }
 
+
+    @Test
+    void exposesTypedAuditEntriesWithoutChangingAppendOnlyEvents() {
+        AuditLog log = new AuditLog();
+        Instant time = Instant.parse("2026-10-23T09:00:00Z");
+        log.record("PA-103", time, "nurse1", "APPROVED", "Routine approval");
+
+        AuditEntry entry = log.getEntries().get(0);
+
+        assertEquals("PA-103", entry.requestId());
+        assertEquals("APPROVED", entry.eventType());
+        assertEquals(1, log.getEvents().size());
+        assertThrows(UnsupportedOperationException.class,
+                () -> log.getEntries().clear());
+    }
+
     @Test
     void filtersEventsByRequestId() {
         AuditLog log = new AuditLog();

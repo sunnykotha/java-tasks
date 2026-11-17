@@ -35,6 +35,13 @@ public class AuditLog {
         return List.copyOf(events);
     }
 
+    public synchronized List<AuditEntry> getEntries() {
+        return events.stream()
+                .map(event -> new AuditEntry(event.requestId(), event.timestamp(),
+                        event.actor(), event.eventType(), event.reason()))
+                .toList();
+    }
+
     public synchronized List<AuditEvent> getEventsForRequest(
             String requestId) {
         requireText(requestId, "Request ID");

@@ -2,11 +2,16 @@ package com.priorauth.workflow;
 
 import java.time.Instant;
 import java.util.Objects;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DecisionService {
 
     private final AuditLog auditLog;
     private final AuthorizationPermissionService permissionService;
+    private final Map<String, List<Decision>> decisions = new HashMap<>();
 
     public DecisionService(AuditLog auditLog) {
         this.auditLog = Objects.requireNonNull(
@@ -45,6 +50,8 @@ public class DecisionService {
         String eventType = approve ? "APPROVED" : "DENIED";
         auditLog.record(
                 requestId, timestamp, actor.trim(), eventType, reason);
+        recordDecision(new Decision(requestId, new Reviewer(actor, role),
+                result, reason, timestamp));
 
         return result;
     }
@@ -109,8 +116,21 @@ public class DecisionService {
                 actor.trim(),
                 overturn ? "APPEAL_OVERTURNED" : "APPEAL_UPHELD",
                 reason);
+        recordDecision(new Decision(requestId, new Reviewer(actor, role),
+                result, reason, timestamp));
 
         return result;
+    }
+
+
+    public synchronized List<Decision> getDecisionsForRequest(String requestId) {
+        requireText(requestId, "Request ID");
+        return List.copyOf(decisions.getOrDefault(requestId, List.of()));
+    }
+
+    private synchronized void recordDecision(Decision decision) {
+        decisions.computeIfAbsent(decision.requestId(), ignored -> new ArrayList<>())
+                .add(decision);
     }
 
     private static void requireText(String value, String field) {

@@ -41,6 +41,15 @@ public class AutoApprovalService {
                 .collect(Collectors.toUnmodifiableSet());
     }
 
+    public boolean isEligible(
+            AuthorizationRequest request, AuthStatus currentStatus) {
+        Objects.requireNonNull(request, "Request is required");
+        Objects.requireNonNull(currentStatus, "Current status is required");
+        return currentStatus == AuthStatus.SUBMITTED
+                && lowRiskProcedureCodes.contains(request.getProcedureCode())
+                && request.isDocumentationComplete();
+    }
+
     public AuthStatus evaluate(
             AuthorizationRequest request,
             AuthStatus currentStatus,
@@ -50,15 +59,7 @@ public class AutoApprovalService {
         Objects.requireNonNull(currentStatus, "Current status is required");
         Objects.requireNonNull(timestamp, "Timestamp is required");
 
-        if (currentStatus != AuthStatus.SUBMITTED) {
-            return currentStatus;
-        }
-
-        if (!lowRiskProcedureCodes.contains(request.getProcedureCode())) {
-            return currentStatus;
-        }
-
-        if (!request.isDocumentationComplete()) {
+        if (!isEligible(request, currentStatus)) {
             return currentStatus;
         }
 

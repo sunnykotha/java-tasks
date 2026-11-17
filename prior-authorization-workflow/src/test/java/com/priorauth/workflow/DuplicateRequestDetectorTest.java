@@ -31,16 +31,16 @@ class DuplicateRequestDetectorTest {
     }
 
     @Test
-    void allowsDifferentPatientProcedureOrEpisode() {
+    void duplicateIdentityUsesPatientAndProcedureRegardlessOfEpisode() {
         DuplicateRequestDetector detector = new DuplicateRequestDetector();
         detector.register("PA-1", "PAT-1", "MRI", "EP-1");
 
         assertFalse(detector.isDuplicate("PAT-2", "MRI", "EP-1"));
         assertFalse(detector.isDuplicate("PAT-1", "CT", "EP-1"));
-        assertFalse(detector.isDuplicate("PAT-1", "MRI", "EP-2"));
-
-        detector.register("PA-2", "PAT-1", "MRI", "EP-2");
-        assertEquals(2, detector.getRegisteredCount());
+        assertTrue(detector.isDuplicate("PAT-1", "MRI", "EP-2"));
+        assertThrows(IllegalStateException.class, () ->
+                detector.register("PA-2", "PAT-1", "MRI", "EP-2"));
+        assertEquals(1, detector.getRegisteredCount());
     }
 
     @Test

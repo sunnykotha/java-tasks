@@ -7,15 +7,14 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Detects duplicate submissions using patient, procedure, and episode.
+ * Detects duplicate submissions using patient and procedure.
  * This detector is in-memory and scoped to its lifetime.
  */
 public final class DuplicateRequestDetector {
 
     public record SubmissionKey(
             String patientId,
-            String procedureCode,
-            String episodeId) { }
+            String procedureCode) { }
 
     private final Map<SubmissionKey, String> registeredRequests =
             new HashMap<>();
@@ -70,10 +69,10 @@ public final class DuplicateRequestDetector {
 
     private static SubmissionKey createKey(
             String patientId, String procedureCode, String episodeId) {
+        requireText(episodeId, "Episode ID"); // Validate supplied episode metadata.
         return new SubmissionKey(
                 requireText(patientId, "Patient ID"),
-                requireText(procedureCode, "Procedure code"),
-                requireText(episodeId, "Episode ID"));
+                requireText(procedureCode, "Procedure code"));
     }
 
     private static String requireText(String value, String field) {
